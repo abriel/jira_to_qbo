@@ -1,0 +1,122 @@
+#!/usr/bin/env ruby
+
+require 'selenium-webdriver'
+require 'yaml'
+require 'jira'
+require 'json'
+require 'colorize'
+require 'date'
+
+def ask_interactive(question, variants)
+  answer = ''
+  loop do
+    print question
+    break if !(answer = STDIN.gets.strip).empty? && variants.include?(answer)
+  end
+  answer
+end
+
+opts = Dir.chdir File.dirname(__FILE__) do
+  YAML.load(
+    File.read(
+      File.basename(__FILE__, '.*') + '.yaml'))
+end
+
+# Go thru all jiras and collect task work logs
+work_log = opts['jiras'].map do |jira|
+  client = JIRA::Client.new(
+    username: jira['username'],
+    password: jira['password'],
+    site: jira['endpoint'],
+    context_path: '',
+    auth_type: :basic)
+
+  jira['projects'].map do |project|
+    # Go thru all projects hosted on the jira
+    client.Issue.jql(
+      "project = #{project['key']} AND updated >= -24h",
+      fields: %w(key summary)
+    ).map do |issue|
+      # Go thru all issues for the project that were updated for last 24 hours
+      last_answer = 'y'
+
+      JSON.parse(
+        client.get(
+          JIRA::Resource::Worklog.collection_path(
+            client,
+            "/issue/#{issue.id}/")
+        ).body
+      )['worklogs'].reverse.map do |worklog|
+        # Go thru all work logs for the issue
+        next unless worklog['author']['key'] == jira['username']
+        next if last_answer == 'n'
+        next unless \
+          DateTime.parse(worklog['updated']).next_day > Time.now.to_datetime
+
+        print "#{worklog['updated']}\t#{worklog['timeSpent']}\n" \
+          "#{issue.key} #{issue.summary}\n#{worklog['comment']}\n"
+
+        next if (last_answer = ask_interactive(
+          'Include this record into work log for today? [y/n]'.bold,
+          %w(y n))) == 'n'
+
+        {
+          message: "#{issue.key} #{issue.summary}\n#{worklog['comment']}",
+          timespent: ":#{(worklog['timeSpentSeconds'].to_f / 60).to_i}",
+          qbo_client: project['qbo_client'],
+          qbo_item: project['qbo_item']
+        }
+      end.compact
+    end
+  end
+end.flatten
+
+puts work_log.to_yaml
+exit 0 if ask_interactive('Continue? [y/n]'.bold, %w(y n)) == 'n'
+
+driver = Selenium::WebDriver.for :chrome, switches: %w(--disable-translate)
+wait = Selenium::WebDriver::Wait.new(timeout: 20)
+
+driver.navigate.to 'https://qbo.intuit.com'
+
+# Login
+driver.find_element(:id, 'login').send_keys opts['username']
+driver.find_element(:id, 'password').send_keys opts['password']
+driver.find_element(:id, 'LoginButton').submit
+
+# Some clean up after log on
+wait.until { driver.find_element(:id, 'modalPopupOverlay') }
+driver.execute_script(
+  'document.getElementById("modalPopupOverlay").remove(this)'
+)
+driver.switch_to.frame wait.until { driver.find_element(:id, 'bodyframe') }
+
+# Create QBO entries according to work log
+work_log.each do |work_log_entry|
+  wait.until { driver.find_element(:id, 'save') }
+  driver.find_element(:id, 'customer').send_keys work_log_entry[:qbo_client]
+  driver.find_element(:id, 'item').send_keys work_log_entry[:qbo_item]
+  driver.find_element(:id, 'hour').send_keys work_log_entry[:timespent]
+  driver.find_element(:id, 'notes').send_keys work_log_entry[:message]
+  driver.find_element(:id, 'save').click
+end
+wait.until { driver.find_element(:id, 'save') }
+
+# Go to reports
+driver.find_element(:id, 'tabmenu_3').click
+Selenium::WebDriver::Support::Select.new(
+  wait.until { driver.find_element(:id, 'actdate_macro') }
+).select_by(:text, 'Today')
+driver.find_element(:id, 'button_id_b5_run_report_small.gif').click
+
+# Send email
+wait.until { driver.find_element(:id, 'button_id_b5_email_small.gif') }.click
+driver.switch_to.default_content
+driver.switch_to.frame wait.until { driver.find_element(:name, 'emailReport') }
+driver.find_element(:name, 'to').send_keys(opts['to'])
+driver.find_element(:name, 'cc').send_keys(opts['cc'])
+driver.execute_script('parent.dojo.publish("sendReportEmail", [document]);')
+driver.switch_to.default_content
+wait.until { driver.find_element(:id, 'emailReport').style('opacity') == '0' }
+
+driver.quit

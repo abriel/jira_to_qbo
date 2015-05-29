@@ -1,0 +1,20 @@
+= Overview
+
+Export JIRA work log into QBO entries for last 24 hours with confirmation.
+
+This script might be helpful if:
+1. You have JIRA ticket system
+2. You track your time in JIRA work log
+3. You need to update your QBO daily according to work log
+
+This script does:
+1. Look for update JIRA tickets for last 24 hours
+2. Collect work log from those tickets
+3. ask for including work log entry into the list (for sure)
+4. Create QBO entries
+
+This script does NOT:
+1. check for duplicate entries in QBO
+
+-- 
+Thanks and Enjoy!

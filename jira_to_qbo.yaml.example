@@ -1,0 +1,13 @@
+---
+  to: my.boss@company.net
+  cc: my@company.net
+  username: my@company.net
+  password: xxxx
+  jiras:
+    - endpoint: https://company.atlassian.net
+      username: my@company.net
+      password: xxxx
+      projects:
+        - key: PRJ1
+          qbo_client: Company:project 1
+          qbo_item: Systems Admin
