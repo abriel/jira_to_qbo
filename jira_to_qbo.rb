@@ -34,10 +34,10 @@ work_log = opts['jiras'].map do |jira|
   jira['projects'].map do |project|
     # Go thru all projects hosted on the jira
     client.Issue.jql(
-      "project = #{project['key']} AND updated >= -24h",
+      "project = #{project['key']} AND updated >= -15h",
       fields: %w(key summary)
     ).map do |issue|
-      # Go thru all issues for the project that were updated for last 24 hours
+      # Go thru all issues for the project that were updated for last 15 hours
       last_answer = 'y'
 
       JSON.parse(
@@ -51,7 +51,8 @@ work_log = opts['jiras'].map do |jira|
         next unless worklog['author']['key'] == jira['username']
         next if last_answer == 'n'
         next unless \
-          DateTime.parse(worklog['updated']).next_day > Time.now.to_datetime
+          DateTime.parse(worklog['updated']) + (15.to_r / 24) > \
+          Time.now.to_datetime
 
         print "#{worklog['updated']}\t#{worklog['timeSpent']}\n" \
           "#{issue.key} #{issue.summary}\n#{worklog['comment']}\n"
