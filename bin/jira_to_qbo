@@ -16,11 +16,14 @@ def ask_interactive(question, variants)
   answer
 end
 
-opts = Dir.chdir File.dirname(__FILE__) do
-  YAML.load(
-    File.read(
-      File.basename(__FILE__, '.*') + '.yaml'))
-end
+opts = YAML.load(
+  File.read(
+    File.join(
+      ENV['HOME'],
+      ".#{File.basename(__FILE__, '.*')}.yaml"
+    )
+  )
+)
 
 # Go thru all jiras and collect task work logs
 work_log = opts['jiras'].map do |jira|
