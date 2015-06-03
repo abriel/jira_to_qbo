@@ -3,8 +3,8 @@ Gem::Specification.new do |s|
   s.version     = '0.1.0'
   s.date        = '2015-06-02'
   s.summary     = 'Export JIRA work logs to QBO (QuickBooks)'
-  s.description = 'Script that takes your daily JIRA work log and' \
-  'create QBO entries based on them. Also sends email report.'
+  s.description = 'Script that takes your daily JIRA work log and ' \
+  'creates QBO entries based on them. Also sends email report.'
 
   s.authors     = ['Dmitry Pisarev']
   s.email       = 'sorra7@gmail.com'
