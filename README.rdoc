@@ -16,5 +16,12 @@ This script does:
 This script does NOT:
 1. check for duplicate entries in QBO
 
+Tips:
+1. If you got something like
+  SSL_connect returned=1 errno=0 state=SSLv3 read server certificate B: certificate verify failed (OpenSSL::SSL::SSLError)
+read man of update-ca-trust or update-ca-certificates to add custom CA certs
+in the system.
+
 -- 
+
 Thanks and Enjoy!
