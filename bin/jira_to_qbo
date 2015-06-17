@@ -51,7 +51,7 @@ work_log = opts['jiras'].map do |jira|
         ).body
       )['worklogs'].reverse.map do |worklog|
         # Go thru all work logs for the issue
-        next unless worklog['author']['key'] == jira['username']
+        next unless worklog['author']['name'] == jira['username']
         next if last_answer == 'n'
         next unless \
           DateTime.parse(worklog['updated']) + (15.to_r / 24) > \
