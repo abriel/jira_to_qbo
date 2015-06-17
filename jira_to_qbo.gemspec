@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'jira_to_qbo'
-  s.version     = '0.1.0'
-  s.date        = '2015-06-02'
+  s.version     = '0.2.1'
+  s.date        = '2015-06-18'
   s.summary     = 'Export JIRA work logs to QBO (QuickBooks)'
   s.description = 'Script that takes your daily JIRA work log and ' \
   'creates QBO entries based on them. Also sends email report.'
@@ -21,4 +21,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'selenium-webdriver', '~> 2.45.0'
   s.add_runtime_dependency 'jira-ruby', '~> 0.1.14'
   s.add_runtime_dependency 'colorize', '~> 0.7.7'
+
+  s.required_ruby_version = '>= 1.9'
 end
