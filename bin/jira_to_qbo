@@ -78,49 +78,67 @@ end.flatten
 puts work_log.to_yaml
 exit 0 if ask_interactive('Continue? [y/n]'.bold, %w(y n)) == 'n'
 
-driver = Selenium::WebDriver.for :chrome, switches: %w(--disable-translate)
-wait = Selenium::WebDriver::Wait.new(timeout: 20)
+begin
+  driver = Selenium::WebDriver.for :chrome, switches: %w(--disable-translate)
+  wait = Selenium::WebDriver::Wait.new(timeout: 20)
+  driver.manage.timeouts.implicit_wait = 20
+  driver.manage.timeouts.script_timeout = 20
+  driver.manage.timeouts.page_load = 20
+  driver.navigate.to 'https://qbo.intuit.com/qbo26/login?webredir'
 
-driver.navigate.to 'https://qbo.intuit.com'
+  # Login
+  driver.find_element(:id, 'login').send_keys opts['username']
+  driver.find_element(:id, 'password').send_keys opts['password']
+  driver.find_element(:id, 'LoginButton').submit
 
-# Login
-driver.find_element(:id, 'login').send_keys opts['username']
-driver.find_element(:id, 'password').send_keys opts['password']
-driver.find_element(:id, 'LoginButton').submit
+  driver.switch_to.frame driver.find_element(:id, 'bodyframe')
 
-# Some clean up after log on
-wait.until { driver.find_element(:id, 'modalPopupOverlay') }
-driver.execute_script(
-  'document.getElementById("modalPopupOverlay").remove(this)'
-)
-driver.switch_to.frame wait.until { driver.find_element(:id, 'bodyframe') }
+  # Create QBO entries according to work log
+  loop do
+    work_log_entry = work_log.first
+    break unless work_log_entry
+    driver.find_element(:id, 'item')
+    wait.until do
+      driver.execute_script('return document.readyState').eql?('complete')
+    end
+    driver.execute_script(
+      'document.getElementById("item").removeAttribute("_qf_onchange")'
+    )
+    driver.find_element(:id, 'customer').send_keys work_log_entry[:qbo_client]
+    driver.find_element(:id, 'item').send_keys work_log_entry[:qbo_item]
+    driver.find_element(:id, 'hour').send_keys work_log_entry[:timespent]
+    driver.find_element(:id, 'notes').send_keys work_log_entry[:message]
+    driver.find_element(:id, 'save').click
+    work_log.shift
+  end
 
-# Create QBO entries according to work log
-work_log.each do |work_log_entry|
-  wait.until { driver.find_element(:id, 'save') }
-  driver.find_element(:id, 'customer').send_keys work_log_entry[:qbo_client]
-  driver.find_element(:id, 'item').send_keys work_log_entry[:qbo_item]
-  driver.find_element(:id, 'hour').send_keys work_log_entry[:timespent]
-  driver.find_element(:id, 'notes').send_keys work_log_entry[:message]
-  driver.find_element(:id, 'save').click
+  # Go to reports
+  driver.switch_to.default_content
+  driver.switch_to.frame driver.find_element(:id, 'bodyframe')
+  driver.find_element(:id, 'tabmenu_3').click
+  Selenium::WebDriver::Support::Select.new(
+    driver.find_element(:id, 'actdate_macro')
+  ).select_by(:text, 'Today')
+  driver.find_element(:id, 'button_id_b5_run_report_small.gif').click
+
+  # Send email
+  driver.switch_to.default_content
+  driver.switch_to.frame driver.find_element(:id, 'bodyframe')
+  driver.find_element(:id, 'button_id_b5_email_small.gif').click
+  driver.switch_to.default_content
+  driver.switch_to.frame driver.find_element(:name, 'emailReport')
+  driver.find_element(:name, 'to').send_keys(opts['to'])
+  driver.find_element(:name, 'cc').send_keys(opts['cc'])
+  driver.execute_script('parent.dojo.publish("sendReportEmail", [document]);')
+  driver.switch_to.default_content
+  wait.until { driver.find_element(:id, 'emailReport').style('opacity') == '0' }
+
+  driver.quit
+rescue Selenium::WebDriver::Error::StaleElementReferenceError,
+       Selenium::WebDriver::Error::NoSuchElementError => e
+  puts e.inspect
+  puts e.backtrace
+  sleep 4
+  driver.quit
+  retry
 end
-wait.until { driver.find_element(:id, 'save') }
-
-# Go to reports
-driver.find_element(:id, 'tabmenu_3').click
-Selenium::WebDriver::Support::Select.new(
-  wait.until { driver.find_element(:id, 'actdate_macro') }
-).select_by(:text, 'Today')
-driver.find_element(:id, 'button_id_b5_run_report_small.gif').click
-
-# Send email
-wait.until { driver.find_element(:id, 'button_id_b5_email_small.gif') }.click
-driver.switch_to.default_content
-driver.switch_to.frame wait.until { driver.find_element(:name, 'emailReport') }
-driver.find_element(:name, 'to').send_keys(opts['to'])
-driver.find_element(:name, 'cc').send_keys(opts['cc'])
-driver.execute_script('parent.dojo.publish("sendReportEmail", [document]);')
-driver.switch_to.default_content
-wait.until { driver.find_element(:id, 'emailReport').style('opacity') == '0' }
-
-driver.quit
