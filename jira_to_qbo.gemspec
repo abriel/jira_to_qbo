@@ -1,7 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'jira_to_qbo'
-  s.version     = '0.2.1'
-  s.date        = '2015-06-18'
+  s.version     = '0.3.0'
   s.summary     = 'Export JIRA work logs to QBO (QuickBooks)'
   s.description = 'Script that takes your daily JIRA work log and ' \
   'creates QBO entries based on them. Also sends email report.'
