@@ -1,0 +1,31 @@
+<html>
+  <body>
+    Hi <%= @pm_name -%>,<br><br>
+
+    Here is a list of work logs and recent comments<br><br>
+
+    <table cellspacing=3>
+      <% @data.each do |work_log| -%>
+        <tr>
+          <td><%= newline_replace(work_log[:message]) %></td>
+          <td style="border-left: 2px solid grey;"><%= work_log[:time] %></td>
+        </tr>
+        <tr><td colspan=1>Comments:</td></tr>
+        <tr><td colspan=2>
+          <table cellspacing=3>
+            <% work_log[:comments].each do |comment| -%>
+              <tr>
+                <td><%= comment[:time] %><br><%= comment[:author] %></td>
+                <td><%= newline_replace(comment[:message]) %></td>
+              </tr>
+            <% end -%>
+          </table>
+        </td></tr>
+        <tr bgcolor='lightgrey'><td colspan=2>&nbsp;</td></tr>
+      <% end -%>
+    </table>
+    <br><br>
+    Thanks,<br>
+    <%= @email_signature -%>
+  </body>
+</html>

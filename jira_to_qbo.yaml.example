@@ -1,13 +1,15 @@
 ---
   to: my.boss@company.net
+  from: my@company.net
   cc: my@company.net
-  username: my@company.net
-  password: xxxx
+  pm_name: Boss Name
+  email_signature: My Name
+  smtp_username: my-smtp-login
+  smtp_password: my-smtp-password
+  smtp_host: smtp-host
   jiras:
     - endpoint: https://company.atlassian.net
       username: my@company.net
       password: xxxx
       projects:
         - key: PRJ1
-          qbo_client: Company:project 1
-          qbo_item: Systems Admin

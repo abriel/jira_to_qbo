@@ -1,20 +1,16 @@
 = Overview
 
-Export JIRA work log into QBO entries by end of your work day with confirmation.
+Takes your daily JIRA work log and sends an email report to your project manager.
 
 This script might be helpful if:
 1. You have JIRA ticket system
 2. You track your time in JIRA work log
-3. You need to update your QBO daily according to work log
+3. You need to update your Project Manager daily according to work log
 
 This script does:
 1. Look for update JIRA tickets for last 15 hours
-2. Collect work log from those tickets
-3. ask for including work log entry into the list (for sure)
-4. Create QBO entries
-
-This script does NOT:
-1. check for duplicate entries in QBO
+2. Collect work log and comments from those tickets
+3. Send an report to your project manager via email
 
 Tips:
 1. If you got something like
