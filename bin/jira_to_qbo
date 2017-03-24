@@ -16,6 +16,15 @@ opts = YAML.load(
   )
 )
 
+def time_format(jira_time_format)
+  time = { 'd' => '0', 'h' => '0', 'm' => '0' }
+  jira_time_format.split.each do |x|
+    time[x[-1]] = x[0..-2]
+  end
+  time['h'] = time['d'].to_i * 8 + time['h'].to_i
+  "#{time['h']}:#{time['m'].rjust(2, '0')}"
+end
+
 # Go thru all jiras and collect task work logs
 work_log = opts['jiras'].map do |jira|
   client = JIRA::Client.new(
@@ -42,41 +51,29 @@ work_log = opts['jiras'].map do |jira|
           Time.now.to_datetime
 
         print "#{worklog['updated']}\t#{worklog['timeSpent']}\n" \
-          "#{issue.key} #{issue.summary}\n#{worklog['comment']}\n"
+          "#{issue.key} (#{issue.summary}) - #{worklog['comment']}\n"
 
         puts '-'.bold.white
 
-        task_comments = JSON.parse(
-          client.get(JIRA::Resource::Comment.collection_path(client, "/issue/#{issue.id}/"))
-            .body
-        )['comments'].map do |comment|
-          next unless \
-          DateTime.parse(comment['updated']) + (15.to_r / 24) > \
-          Time.now.to_datetime
-
-          {
-            message: comment['body'],
-            time: comment['updated'],
-            author: comment['author']['key']
-          }
-        end.compact
-
         {
-          message: "#{issue.key} #{issue.summary}\n#{worklog['comment']}",
-          time: worklog['timeSpent'],
-          comments: task_comments
+          message: "#{issue.key} (#{issue.summary}) - #{worklog['comment']} " \
+                   "- #{time_format(worklog['timeSpent'])}"
         }
       end.compact
     end
   end
 end.flatten
 
+puts 'Ready to send report? You can press Ctrl+C to abort.'
+STDIN.gets
+
 JiraToQbo::EmailReport.new(work_log,
                            pm_name: opts['pm_name'],
+                           report_date: (Time.now - 8 * 3600).strftime('%b/%d/%Y'),
                            email_signature: opts['email_signature'])
-  .send(rcpt: opts['to'],
-        cc: opts['cc'],
-        from: opts['from'],
-        smtp_username: opts['smtp_username'],
-        smtp_password: opts['smtp_password'],
-        smtp_host: opts['smtp_host'])
+                      .send(rcpt: opts['to'],
+                            cc: opts['cc'],
+                            from: opts['from'],
+                            smtp_username: opts['smtp_username'],
+                            smtp_password: opts['smtp_password'],
+                            smtp_host: opts['smtp_host'])

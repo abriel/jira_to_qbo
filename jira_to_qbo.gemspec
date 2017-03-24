@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'jira_to_qbo'
-  s.version     = '0.4.0'
+  s.version     = '0.5.0'
   s.summary     = 'Report the latest JIRA activity to PM'
   s.description = 'Script that takes your daily JIRA work log and ' \
   'sends an email report to your project manager.'

@@ -22,7 +22,7 @@ module JiraToQbo
 
       Pony.mail(
         subject: 'Activity report',
-        html_body: email_body,
+        body: email_body,
         to: opts[:rcpt],
         from: opts[:from],
         cc: opts[:cc],
