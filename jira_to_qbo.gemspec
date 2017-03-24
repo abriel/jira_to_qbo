@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
     'lib/jira_to_qbo.rb',
     'lib/jira_to_qbo/email_report.rb'
   ]
-  s.license     = 'GPL-2'
+  s.license     = 'GPL-2.0'
   s.homepage = 'https://github.com/abriel/jira_to_qbo'
   s.post_install_message = 'To use jira_to_qbo you need to create ' \
   '~/.jira_to_qbo.yaml file.'
